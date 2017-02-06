@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Animated Resume</title>
+	<!--Isaac Stein 3351088-->
+	<!-- DIG4104C 02/05/17 -->	
+	<link rel="icon" href="images/mmorpgkicon.png" type="image/ico" sizes="32x32">
+    <link rel="stylesheet" href="css/example.css" />
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	
+			<style>
+			#tooltip {
+				position: absolute;
+				width: 200px;
+				height: auto;
+				padding: 10px;
+				background-color: white;
+				border-radius: 10px;
+				box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+				pointer-events: none;
+			}
+			#tooltip.hidden {
+				display: none;
+			}
+
+			#tooltip p {
+				margin: 0;
+				font-family: sans-serif;
+				font-size: 16px;
+				line-height: 20px;
+			}
+		</style>
+</head>
+<body>
+
+    <div>
+    <div class="horizon scroll">
+        <img src="images/horizon.png" alt="" />
+    </div>
+    <div class="middle scroll">
+        <img src="images/middle.png" alt="" />
+    </div>
+	<div class="front scroll">
+        <img src="images/front.png" alt="" />
+    </div>
+
+    
+    <script type="text/javascript" src="../libs/jquery.min.js"></script>
+    <script type="text/javascript" src="../dist/js/jquery.jInvertScroll.js"></script>
+    <script type="text/javascript">
+    (function($) {
+        $.jInvertScroll(['.scroll'],        // an array containing the selector(s) for the elements you want to animate
+            {
+            height: 6000,                   // optional: define the height the user can scroll, otherwise the overall length will be taken as scrollable height
+            onScroll: function(percent) {   //optional: callback function that will be called when the user scrolls down, useful for animating other things on the page
+                console.log(percent);
+            }
+        });
+    }(jQuery));
+    </script>
+	</div>
+	
+	
+	<br /><br /><br /><br /><br />
+	<br /><br /><br /><br /><br />
+	
+		<div id="tooltip" class="hidden">
+			<p><strong>Experience in <span id="language">Language</span></strong></p>
+			<p><span id="value">Details</p>
+		</div>
+       	<script type="text/javascript">
+			//Width and height - controls how much space we'll let the chart have
+			var sortDir = false;
+			
+			var w = 500;
+			var h = 300;
+			var dataset = [
+				{ "name": "HTML", "rank": 10, "experience": "Used for Website creation" },
+				{ "name": "CSS", "rank": 8, "experience": "Used for Website styling" },
+				{ "name": "JQuery", "rank": 6, "experience": "Used for Website functionality" },
+				{ "name": "JavaScript", "rank": 4, "experience": "Used for Website functionality" },
+				{ "name": "PHP", "rank": 2, "experience": "Used for Database functionality" }
+			];
+			//var dataset = [ 4, 15, 30, 8, 40];
+			//var languages = [ 'C++', 'Java', 'Basic', 'Pascal', 'JavaScript'];
+			
+			//creates a scale suitable for something with ordinal (ordered) value
+			var xScale = d3.scale.ordinal()
+							//creates a space for each piece of data as a bar
+							.domain(d3.range(dataset.length))
+							//divides the available width  by the number of bars, leaving space between for margins
+							.rangeRoundBands([0, w], 0.1);
+			var yScale = d3.scale.linear()
+							//set the height range through the highest value in the dataset
+							.domain([0, 10])
+							.range([0, h]);
+			
+			//Create SVG element
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+			//Create bars
+			svg.selectAll("rect")
+			   .data(dataset)
+			   .enter()
+			   .append("rect")
+			   .attr("x", function(d, i) {
+			   		//scale the x to the space set previously
+					return xScale(i);
+			   })
+			   .attr("y", function(d) {
+			   		return h - yScale(d.rank);
+			   })
+			   .attr("width", xScale.rangeBand())
+			   .attr("height", function(d) {
+			   		return yScale(d.rank);
+			   })
+			   .attr("fill", function(d) {
+					//sets color based on the data
+					return "rgb(0, " + (d.rank * 10) + ", 0)";
+			   })
+			   //adds hover color change
+			   .on("mouseover", function(d) {
+			   		d3.select(this)
+			   			.attr("fill", "red");
+					//Get this bar's x/y values, then augment for the tooltip
+					var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+					var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+					//Update the tooltip position and value
+					d3.select("#tooltip")
+						.style("left", xPosition + "px")
+						.style("top", yPosition + "px")						
+						.select("#value")
+						.text(d.experience);
+					d3.select("#tooltip")
+						.select("#language")
+						.text(d.name);
+			   
+					//Show the tooltip
+					d3.select("#tooltip").classed("hidden", false);
+			   })
+			   //changes back when not hovered
+			   .on("mouseout", function(d) {
+				   d3.select(this)
+						.transition()
+				   		.duration(250)
+						.attr("fill", "rgb(0, " + (d.rank * 10) + ",0)");
+				//Hide the tooltip
+					d3.select("#tooltip").classed("hidden", true);		
+			   });
+			//Create labels
+			svg.selectAll("text")
+			   .data(dataset)
+			   .enter()
+			   .append("text")
+			   .text(function(d, i) {
+					//grab the label at same index as current element
+			   		//return languages[i];
+					return d.name;
+			   })
+			   .attr("text-anchor", "middle")
+			   .attr("x", function(d, i) {
+					//place the text relative to the index of the data
+			   		return xScale(i) + xScale.rangeBand() / 2;
+			   })
+			   .attr("y", function(d) {
+			   		return h - yScale(d.rank) + 14;
+			   })
+			   .attr("font-family", "sans-serif")
+			   .attr("font-size", "14px")
+			   .attr("fill", "white");
+			
+		</script>		
+
+<style>
+	div.bar {
+		
+
+<script>
+	var dataset =[5,10,15,20,25];
+
+	/*d3.select(‘body’)
+	.append(‘p’)
+	.text(Hello World!’);*/
+
+d3.select(‘body’).selectAll(‘p’)
+	.data(dataset)
+	.enter()
+	.append(‘p”)
+	.text(function(d){
+		return d;
+	})
+.style(‘color, function (d) {
+	if(d>15) {
+	return ‘red’;
+	}else {
+	return’green’;
+	}
+	});
+
+	d3.select’body’).selectAll(‘div”)
+	.append(‘div’
+	.sttr(‘class’,’bar’)
+	.style(‘height’ function(d) {
+		return d*10 + ‘px’
+
+</script>
+
+</div>
+</body>
+</html>
